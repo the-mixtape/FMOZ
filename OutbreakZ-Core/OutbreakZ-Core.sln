@@ -1,0 +1,27 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26124.0
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutbreakZ-Core.Client", "Client\OutbreakZ-Core.Client.csproj", "{437AD460-5287-4140-8B0A-8A24791E42B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutbreakZ-Core.Server", "Server\OutbreakZ-Core.Server.csproj", "{43D7E39D-0F73-4ECC-B50D-54302B1E2B9F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{437AD460-5287-4140-8B0A-8A24791E42B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{437AD460-5287-4140-8B0A-8A24791E42B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{437AD460-5287-4140-8B0A-8A24791E42B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{437AD460-5287-4140-8B0A-8A24791E42B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43D7E39D-0F73-4ECC-B50D-54302B1E2B9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43D7E39D-0F73-4ECC-B50D-54302B1E2B9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43D7E39D-0F73-4ECC-B50D-54302B1E2B9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43D7E39D-0F73-4ECC-B50D-54302B1E2B9F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
