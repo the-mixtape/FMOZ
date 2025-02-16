@@ -134,3 +134,6 @@ _NCrunch*
 
 #Resharper
 .idea
+
+#FiveM build
+dist
