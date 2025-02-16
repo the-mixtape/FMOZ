@@ -9,8 +9,8 @@ namespace OutbreakZCore.Server.Core
         private SpawnPosition GetRandomSpawnPosition()
         {
             var random = new Random();
-            var randomIndex = random.Next(Config.SpawnsPoints.Count);
-            return Config.SpawnsPoints[randomIndex];
+            var randomIndex = random.Next(OutbreakZServer.ServerConfig.SpawnPositions.Count);
+            return OutbreakZServer.ServerConfig.SpawnPositions[randomIndex];
         }
     }
 }
