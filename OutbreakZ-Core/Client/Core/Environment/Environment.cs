@@ -1,4 +1,5 @@
 ﻿using CitizenFX.Core;
+using System.Threading.Tasks;
 using static CitizenFX.Core.Native.API;
 
 namespace OutbreakZCore.Client.Core
@@ -13,8 +14,15 @@ namespace OutbreakZCore.Client.Core
             SetArtificialLightsState(true);
             SetScenarioGroupEnabled(DefaultScenario, false);
             StartAudioScene(DefaultAudioScene);
-            SetDistantCarsEnabled(true);
+            SetDistantCarsEnabled(false);
             SetMaxWantedLevel(0);
+        }
+
+        [Tick]
+        private Task EnablePvp()
+        {
+            NetworkSetFriendlyFireOption(true);
+            return Task.FromResult(true);
         }
     }
 }

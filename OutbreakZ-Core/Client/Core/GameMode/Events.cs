@@ -1,6 +1,6 @@
 ﻿using CitizenFX.Core;
 using OutbreakZCore.Shared;
-using OutbreakZCore.Shared.Helpers;
+using OutbreakZCore.Shared.Utils;
 using static CitizenFX.Core.Native.API;
 
 namespace OutbreakZCore.Client.Core.GameMode
@@ -25,6 +25,8 @@ namespace OutbreakZCore.Client.Core.GameMode
                 spawnPosition.Location.X, spawnPosition.Location.Y, spawnPosition.Location.Z,
                 false, false, false, true
             );
+            
+            UI.ShowNotification($"Player has spawned at {Game.PlayerPed.Position}.");
         }
     }
 }

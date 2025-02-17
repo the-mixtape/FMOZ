@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace OutbreakZCore.Shared.Helpers
+namespace OutbreakZCore.Shared.Utils
 {
     public static class Converter
     {

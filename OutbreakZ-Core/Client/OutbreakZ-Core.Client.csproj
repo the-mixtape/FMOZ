@@ -13,6 +13,5 @@
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Core\PlayerController\" />
-      <Folder Include="Core\Utils\" />
     </ItemGroup>
 </Project>
