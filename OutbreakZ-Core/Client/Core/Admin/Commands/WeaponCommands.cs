@@ -12,34 +12,42 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
         {
             if (args.Count < 2)
             {
-                UI.ShowNotification("/weapon [Ped ID (local -1)] [Weapon Name] [Ammo (Optional)]");
+                UI.ShowNotification("/weapon [Weapon Name] [Ammo (Optional)]");
                 return;
             }
 
-            int pedId = Convert.ToInt32(args[0]);
             string weaponName = args[1].ToString();
 
-            if (pedId == -1)
+            int ammoCount = 999;
+            if (args.Count >= 2)
             {
-                pedId = PlayerPedId();
+                ammoCount = Convert.ToInt32(args[1]);
             }
 
-            int ammoCount = 999;
-            if (args.Count >= 3)
+            if (!DoesEntityExist(PlayerPedId()))
             {
-                ammoCount = Convert.ToInt32(args[2]);
-            }
-                
-            if (!DoesEntityExist(pedId))
-            {
-                UI.ShowNotification($"Ped with ID {pedId} does not exist.");
+                UI.ShowNotification($"Ped with ID {PlayerPedId()} does not exist.");
                 return;
             }
 
+            TakeWeapon(PlayerPedId(), weaponName, ammoCount);
+            await Task.FromResult(0);
+        }
+
+        public async Task OnTakeWeapons(int source, List<object> args, string rawCommand)
+        {
+            TakeWeapon(PlayerPedId(),"WEAPON_BAT");
+            TakeWeapon(PlayerPedId(),"WEAPON_PISTOL");
+            TakeWeapon(PlayerPedId(),"WEAPON_HEAVYRIFLE");
+            TakeWeapon(PlayerPedId(),"WEAPON_SNIPERRIFLE");
+            await Task.FromResult(0);
+        }
+
+        private void TakeWeapon(int pedId, string weaponName, int ammoCount = 999)
+        {
             var weaponHash = (uint)GetHashKey(weaponName);
             GiveWeaponToPed(pedId, weaponHash, ammoCount, false, true);
             UI.ShowNotification($"Weapon {weaponName} was given to ped {pedId}");
-            
         }
     }
 }

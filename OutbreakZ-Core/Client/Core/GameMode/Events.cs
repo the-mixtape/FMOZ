@@ -18,13 +18,17 @@ namespace OutbreakZCore.Client.Core.GameMode
         [EventHandler("GameMode:SetPlayerPosition")]
         public void OnSetPlayerPosition(string data)
         {
+            var playerPedId = PlayerPedId();
+            
             var spawnPosition = Converter.FromJson<SpawnPosition>(data);
-            SetEntityHeading(PlayerPedId(), spawnPosition.Heading);
+            SetEntityHeading(playerPedId, spawnPosition.Heading);
             SetEntityCoords(
-                PlayerPedId(),
+                playerPedId,
                 spawnPosition.Location.X, spawnPosition.Location.Y, spawnPosition.Location.Z,
                 false, false, false, true
             );
+            
+            NetworkConcealPlayer(playerPedId, true,false);
             
             UI.ShowNotification($"Player has spawned at {Game.PlayerPed.Position}.");
         }

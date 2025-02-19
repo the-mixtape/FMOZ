@@ -13,6 +13,7 @@ namespace OutbreakZCore.Client.Core.Admin
         private readonly HealthCommands _healthCommands = new HealthCommands();
         private readonly WeaponCommands _weaponCommands = new WeaponCommands();
         private readonly SkinCommands _skinCommands = new SkinCommands();
+        private readonly DevCommands _devCommands = new DevCommands();
         
 
         private void BeginPlay()
@@ -27,8 +28,10 @@ namespace OutbreakZCore.Client.Core.Admin
             RegisterBaseCommand("revive", _healthCommands.OnRevive);
             RegisterBaseCommand("heal", _healthCommands.OnHeal);
             RegisterBaseCommand("weapon", _weaponCommands.OnTakeWeapon);
+            RegisterBaseCommand("weapons", _weaponCommands.OnTakeWeapons);
             RegisterBaseCommand("setskin", _skinCommands.OnSetSkin);
             RegisterBaseCommand("randskin", _skinCommands.OnRandomSkin);
+            RegisterBaseCommand("zombie", _devCommands.OnSpawnZombie);
         }
 
         private void RegisterBaseCommand(string commandName, Func<int, List<object>, string, Task> command)

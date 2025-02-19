@@ -8,7 +8,7 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
 {
     public class CarCommands : BaseScript
     {
-        private const string DefaultVehicle = "adder";
+        private const string DefaultVehicle = "bmx";
         private readonly List<int> _spawnedVehicles = new List<int>();
 
         public async Task OnSpawn(int source, List<object> args, string rawCommand)

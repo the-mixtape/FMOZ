@@ -5,5 +5,11 @@ namespace OutbreakZCore.Client.Core
 {
     public partial class Player : BaseScript
     {
+
+        private void BeginPlay()
+        {
+            var playerPedId = PlayerPedId();
+            Groups.AddPedInHumanGroup(playerPedId);
+        }
     }
 }
