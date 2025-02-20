@@ -37,7 +37,7 @@ namespace OutbreakZCore.Client.Core.Utils
             }
 
             FreezePlayer(PlayerId(), true);
-            await Game.Player.ChangeModel(model);
+            await CitizenFX.Core.Game.Player.ChangeModel(model);
             SetPedDefaultComponentVariation(GetPlayerPed(-1));
             RequestCollisionAtCoord(position.X, position.Y, position.Z);
 

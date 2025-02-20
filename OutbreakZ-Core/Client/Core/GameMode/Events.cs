@@ -1,4 +1,5 @@
-﻿using CitizenFX.Core;
+﻿using System.Threading.Tasks;
+using CitizenFX.Core;
 using OutbreakZCore.Shared;
 using OutbreakZCore.Shared.Utils;
 using static CitizenFX.Core.Native.API;
@@ -15,22 +16,18 @@ namespace OutbreakZCore.Client.Core.GameMode
             _ = BeginPlay();
         }
 
-        [EventHandler("GameMode:SetPlayerPosition")]
-        public void OnSetPlayerPosition(string data)
+        // [EventHandler("GameMode:SetPlayerPosition")]
+        // public void OnSetPlayerPosition(string data)
+        // {
+        //     var spawnPosition = Converter.FromJson<SpawnPosition>(data);
+        //     _ = SetPlayerPosition(spawnPosition);
+        // }
+
+        [EventHandler("GameMode:RespawnPlayer")]
+        public void OnRespawnPlayer(string data)
         {
-            var playerPedId = PlayerPedId();
-            
             var spawnPosition = Converter.FromJson<SpawnPosition>(data);
-            SetEntityHeading(playerPedId, spawnPosition.Heading);
-            SetEntityCoords(
-                playerPedId,
-                spawnPosition.Location.X, spawnPosition.Location.Y, spawnPosition.Location.Z,
-                false, false, false, true
-            );
-            
-            NetworkConcealPlayer(playerPedId, true,false);
-            
-            UI.ShowNotification($"Player has spawned at {Game.PlayerPed.Position}.");
+            _ = RespawnPlayer(spawnPosition);
         }
     }
 }

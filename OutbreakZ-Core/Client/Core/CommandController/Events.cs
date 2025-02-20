@@ -1,9 +1,9 @@
 ﻿using CitizenFX.Core;
 using static CitizenFX.Core.Native.API;
 
-namespace OutbreakZCore.Client.Core.Admin
+namespace OutbreakZCore.Client.Core.CommandController
 {
-    public partial class Admin
+    public partial class CommandController
     {
         
         [EventHandler("onClientResourceStart")]

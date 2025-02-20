@@ -1,3 +1,7 @@
-SpawnPoints:
-  Location: { X: 430.0, Y: -980.0, Z: 30.0 }
-  Heading: 90.0
+SpawnPositions:
+  - Location: { X: -1238.0, Y: -1840.0, Z: 2.5 }
+    Heading: 320.0
+  - Location: { X: -1385.0, Y: -1628.0, Z: 2.5 }
+    Heading: 328.0
+  - Location: { X: -1530.0, Y: -1280.0, Z: 2.0 }
+    Heading: 269.0

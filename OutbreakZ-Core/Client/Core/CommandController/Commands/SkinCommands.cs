@@ -35,7 +35,7 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
         {
             if (!IsModelInCdimage(modelHash) || !IsModelValid(modelHash))
             {
-                UI.ShowNotification($"Invalid model name. {modelName}");
+                UI.ShowNotification($"Invalid model name {modelName}.");
                 return;
             }
 

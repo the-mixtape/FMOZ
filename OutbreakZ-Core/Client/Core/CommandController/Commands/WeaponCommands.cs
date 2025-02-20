@@ -10,13 +10,13 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
     {
         public async Task OnTakeWeapon(int source, List<object> args, string rawCommand)
         {
-            if (args.Count < 2)
+            if (args.Count < 1)
             {
                 UI.ShowNotification("/weapon [Weapon Name] [Ammo (Optional)]");
                 return;
             }
 
-            string weaponName = args[1].ToString();
+            string weaponName = args[0].ToString();
 
             int ammoCount = 999;
             if (args.Count >= 2)
@@ -37,9 +37,10 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
         public async Task OnTakeWeapons(int source, List<object> args, string rawCommand)
         {
             TakeWeapon(PlayerPedId(),"WEAPON_BAT");
-            TakeWeapon(PlayerPedId(),"WEAPON_PISTOL");
+            TakeWeapon(PlayerPedId(),"WEAPON_GRENADE");
             TakeWeapon(PlayerPedId(),"WEAPON_HEAVYRIFLE");
             TakeWeapon(PlayerPedId(),"WEAPON_SNIPERRIFLE");
+            TakeWeapon(PlayerPedId(),"WEAPON_PISTOL");
             await Task.FromResult(0);
         }
 

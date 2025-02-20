@@ -8,8 +8,7 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
 {
     public class CarCommands : BaseScript
     {
-        private const string DefaultVehicle = "bmx";
-        private readonly List<int> _spawnedVehicles = new List<int>();
+        private const string DefaultVehicle = "deathbike";
 
         public async Task OnSpawn(int source, List<object> args, string rawCommand)
         {
@@ -23,7 +22,7 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
 
             if (!IsModelInCdimage(vehicleHash) || !IsModelAVehicle(vehicleHash))
             {
-                Debug.WriteLine($"[ERROR] Vehicle model {vehicleName} is invalid!");
+                UI.ShowNotification($"Vehicle model {vehicleName} is invalid!");
                 return;
             }
 
@@ -39,11 +38,9 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
 
             if (vehicle == 0)
             {
-                Debug.WriteLine($"[ERROR] Vehicle not spawned!");
+                UI.ShowNotification("Vehicle not spawned!");
                 return;
             }
-            
-            _spawnedVehicles.Add(vehicle);
             
             int netId = NetworkGetNetworkIdFromEntity(vehicle);
             SetNetworkIdCanMigrate(netId, true); // Позволяет передавать объект другим игрокам
@@ -52,23 +49,26 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
 
             SetPedIntoVehicle(playerPed, vehicle, -1);
             SetModelAsNoLongerNeeded(vehicleHash);
+            
+            UI.ShowNotification($"Vehicle was spawned {vehicleName}");
         }
 
 
         public Task OnClear(int source, List<object> args, string rawCommand)
         {
-            foreach (int vehicle in _spawnedVehicles)
-            {
-                int vehicleHandle = vehicle;
-                if (DoesEntityExist(vehicle))
-                {
-                    SetEntityAsMissionEntity(vehicleHandle, true, true);
-                    DeleteVehicle(ref vehicleHandle);
-                }
-            }
-            
-            _spawnedVehicles.Clear();
-            Debug.WriteLine("[INFO] All spawned vehicles have been deleted.");
+            // TODO: rework
+            // foreach (int vehicle in _spawnedVehicles)
+            // {
+            //     int vehicleHandle = vehicle;
+            //     if (DoesEntityExist(vehicle))
+            //     {
+            //         SetEntityAsMissionEntity(vehicleHandle, true, true);
+            //         DeleteVehicle(ref vehicleHandle);
+            //     }
+            // }
+            //
+            // _spawnedVehicles.Clear();
+            // Debug.WriteLine("[INFO] All spawned vehicles have been deleted.");
             return Task.FromResult(true);
         }
     }

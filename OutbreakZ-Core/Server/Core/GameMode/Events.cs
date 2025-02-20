@@ -11,9 +11,18 @@ namespace OutbreakZCore.Server.Core
         {
             var license = source.Identifiers["license"];
             
-            var spawnPosition = GetRandomSpawnPosition();
+            var spawnPosition = GetNextSpawnPosition();
             Debug.WriteLine($"{source.Name}#{license} spawn in position: {spawnPosition}");
-            TriggerClientEvent(source, "GameMode:SetPlayerPosition", Converter.ToJson(spawnPosition));
+            TriggerClientEvent(source, "GameMode:RespawnPlayer", Converter.ToJson(spawnPosition));
         }
+
+        [EventHandler("GameMode:RespawnPlayer")]
+        private void OnRespawnPlayer([FromSource] CitizenFX.Core.Player source)
+        {
+            var spawnPosition = GetNextSpawnPosition();
+            Debug.WriteLine($"{source.Name} respawned in position: {spawnPosition}");
+            TriggerClientEvent(source, "GameMode:RespawnPlayer", Converter.ToJson(spawnPosition));
+        }
+        
     }
 }
