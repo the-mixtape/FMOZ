@@ -6,8 +6,9 @@ namespace OutbreakZCore.Client.Core
 {
     public partial class Player : BaseScript
     {
-        public delegate void DeathEventHandler();
-        public static event DeathEventHandler DeathEvent;
+        public delegate void PlayerEventHandler();
+        public static event PlayerEventHandler DeathEvent;
+        public static event PlayerEventHandler RequestRespawnEvent;
         
         private static bool Dead { get; set; } = false;
         private static int OnPressed { get; set; } = 0;
@@ -69,7 +70,7 @@ namespace OutbreakZCore.Client.Core
                     if (OnPressed > 30 && !InRespawnProcess)
                     {
                         InRespawnProcess = true;
-                        TriggerServerEvent("GameMode:RespawnPlayer");
+                        RequestRespawnEvent?.Invoke();
                     }
                 }
                 else

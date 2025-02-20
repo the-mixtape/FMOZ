@@ -38,7 +38,7 @@ namespace OutbreakZCore.Client.Core
             }
         }
 
-        class ZombieSettings
+        public class ZombieSettings
         {
             public string ZombieSkin { get; set; }
             public float WalkSpeed { get; set; }
@@ -191,33 +191,33 @@ namespace OutbreakZCore.Client.Core
                     if (nearestPlayer == null)
                     {
                         TaskStandStill(_zombie.Handle, -1);
+                        return;
+                    }
+
+                    float speed = _settings.WalkSpeed;
+                    if (_inRunState)
+                    {
+                        speed = _settings.RunSpeed;
                     }
                     else
                     {
-                        float speed = _settings.WalkSpeed;
-                        if (_inRunState)
+                        if (distanceToTarget < ZombieDistanceToRun &&
+                            HasEntityClearLosToEntity(_zombie.Handle, nearestPlayer.Character.Handle, 17))
                         {
+                            _inRunState = true;
                             speed = _settings.RunSpeed;
                         }
-                        else
-                        {
-                            if (distanceToTarget < ZombieDistanceToRun &&
-                                HasEntityClearLosToEntity(_zombie.Handle, nearestPlayer.Character.Handle, 17))
-                            {
-                                _inRunState = true;
-                                speed = _settings.RunSpeed;
-                            }
-                        }
-
-                        TaskGoToEntity(
-                            _zombie.Handle, nearestPlayer.Character.Handle,
-                            -1, 0.0f, speed, 1073741824, 0
-                        );
                     }
+
+                    TaskGoToEntity(
+                        _zombie.Handle, nearestPlayer.Character.Handle,
+                        -1, 0.0f, speed, 1073741824, 0
+                    );
                 }
 
+                if (nearestPlayer == null) return;
+
                 if (distanceToTarget < ZombieDistanceToMelee &&
-                    nearestPlayer != null &&
                     !(nearestPlayer.Character.IsRagdoll || nearestPlayer.Character.IsGettingUp) &&
                     !(_zombie.IsRagdoll || _zombie.IsGettingUp))
                 {
@@ -241,9 +241,10 @@ namespace OutbreakZCore.Client.Core
                             var attackAngle = Math.Acos(dot) * (180.0f / Math.PI);
 
                             distanceToTarget = Vector3.Distance(zombiePosition, targetPosition);
-                            if (distanceToTarget < ZombieDistanceToTakeDamage && attackAngle < AttackAngleThreshold)
+                            if (!CheckPedInCombat(nearestPlayer.Character.Handle) &&
+                                distanceToTarget < ZombieDistanceToTakeDamage && attackAngle < AttackAngleThreshold)
                             {
-                                Vector3 force = new Vector3(0.5f, 0.5f, 0.5f);
+                                Vector3 force = new Vector3(0.5f, 0.5f, 0.0f);
                                 KnockbackPed(nearestPlayer.Character.Handle, force);
 
                                 var targetServerId = GetPlayerServerId(nearestPlayer.Handle);
@@ -254,9 +255,15 @@ namespace OutbreakZCore.Client.Core
                 }
             }
 
+            private bool CheckPedInCombat(int pedId)
+            {
+                return GetIsTaskActive(pedId, 130) || /* CTaskMeleeActionResult  */
+                       GetIsTaskActive(pedId, 3); /* CTaskCombatRoll */
+            }
+
             void KnockbackPed(int targetPed, Vector3 force)
             {
-                SetPedToRagdoll(targetPed, 350, 750, 0, false, false, false);
+                SetPedToRagdoll(targetPed, 350, 500, 0, false, false, false);
                 ApplyForceToEntity(targetPed, 1, force.X, force.Y, force.Z, 0, 0, 0, 0, false, true, true, false, true);
             }
 
@@ -273,13 +280,16 @@ namespace OutbreakZCore.Client.Core
 
                 // var isZombie = _zombie.State.Get("isZombie");
                 // Debug.WriteLine($"isZombie: {isZombie}");
-                
+
                 // int netId = NetworkGetNetworkIdFromEntity(_zombie.Handle);
                 // Debug.WriteLine($"netId: {netId}");
 
                 SetPedMovementClipset(_zombie.Handle, ZombieMoveSet, 1.0f);
 
                 StopPedSpeaking(_zombie.Handle, true);
+                SetPedConfigFlag(_zombie.Handle, 104, true);
+                StopCurrentPlayingSpeech(_zombie.Handle);
+                StopCurrentPlayingAmbientSpeech(_zombie.Handle);
                 DisablePedPainAudio(_zombie.Handle, true);
                 SetBlockingOfNonTemporaryEvents(_zombie.Handle, true);
                 SetPedFleeAttributes(_zombie.Handle, 0, false);
@@ -297,7 +307,7 @@ namespace OutbreakZCore.Client.Core
             {
                 CitizenFX.Core.Player nearestPlayer = null;
                 float minDistance = float.MaxValue;
-                
+
                 foreach (var player in Players)
                 {
                     if (_zombie.Handle == player.Handle)
@@ -376,14 +386,16 @@ namespace OutbreakZCore.Client.Core
         };
 
         private static readonly Random Random = new Random();
+
         private const int MaxOwnZombies = 5;
+
         // private const int MaxZombies = 20;
         private const int SpawnDelay = 1500;
         private const float SpawnMinRadius = 30.0f;
         private const float SpawnMaxRadius = 60.0f;
 
         private const float NearestPlayerScanRadius = 200.0f;
-            
+
         private static bool _spawnEnabled;
         private static readonly object EnabledLock = new object();
 
@@ -420,7 +432,8 @@ namespace OutbreakZCore.Client.Core
             }
 
             bool debug = Variables.ZombieDebug;
-            return $"Spawner: {spawnerStatus} | Zombies: {zombieCount} | Owner: {owner}/{MaxOwnZombies} | Debug: {debug}";
+            return
+                $"Spawner: {spawnerStatus} | Zombies: {zombieCount} | Owner: {owner}/{MaxOwnZombies} | Debug: {debug}";
         }
 
         private static int ZombieInOwner()
@@ -437,6 +450,7 @@ namespace OutbreakZCore.Client.Core
                     }
                 }
             }
+
             return owner;
         }
 
@@ -475,17 +489,16 @@ namespace OutbreakZCore.Client.Core
             await zombieModel.Request(5000);
             if (zombieModel.IsLoaded)
             {
-                
                 // TriggerServerEvent("Server:ZombieSpawnManager:SpawnZombie", zombieSettings.ZombieSkin, position.X, position.Y, position.Z);
                 // return true;
-                
+
                 Ped zombie = await World.CreatePed(zombieModel, position);
                 if (zombie == null) return false;
-                
+
                 NetworkRegisterEntityAsNetworked(zombie.Handle);
                 int netId = PedToNet(zombie.Handle);
                 Debug.WriteLine($"ZombieNetId: {netId}");
-                
+
                 while (!NetworkGetEntityIsNetworked(zombie.Handle))
                 {
                     Debug.WriteLine("!NetworkGetEntityIsNetworked");
@@ -504,11 +517,12 @@ namespace OutbreakZCore.Client.Core
 
                 zombie.State.Set("isZombie", "hux", true);
                 zombie.MarkAsNoLongerNeeded();
-                
+
                 var zombieNetId = NetworkGetEntityNetScriptId(zombie.Handle);
                 Debug.WriteLine($"ZombieNetId: {zombieNetId}");
                 return true;
             }
+
             return false;
         }
 
@@ -522,29 +536,28 @@ namespace OutbreakZCore.Client.Core
         [Tick]
         private async Task OnFindZombieTick()
         {
-            
             // Debug.WriteLine($"Players count: {Players.Count()}");
-            
+
             Ped[] allPeds = World.GetAllPeds();
             foreach (Ped ped in allPeds)
             {
                 // bool isZombie = IsZombie(ped);
                 // Debug.WriteLine($"IsZombie: {isZombie}");
-        
+
                 if (!IsPedAPlayer(ped.Handle) && ped.IsHuman && ped.IsAlive)
                 {
                     lock (ZombieContextsLock)
                     {
                         if (ZombieContexts.ContainsKey(ped.Handle)) continue;
-        
+
                         var context = new ZombieContext(ped);
                         ZombieContexts.Add(ped.Handle, context);
-        
+
                         _ = context.Start();
                     }
                 }
             }
-        
+
             lock (ZombieContextsLock)
             {
                 List<int> toDelete = new List<int>();
@@ -557,16 +570,16 @@ namespace OutbreakZCore.Client.Core
                         toDelete.Add(ped);
                     }
                 }
-        
+
                 foreach (var key in toDelete)
                 {
                     ZombieContexts.Remove(key);
                 }
             }
-        
+
             await Delay(1000);
         }
-        
+
         [Tick]
         private async Task OnSpawnTick()
         {
@@ -575,23 +588,23 @@ namespace OutbreakZCore.Client.Core
                 int maxZombies = MaxOwnZombies;
                 var localPlayerPosition = Game.PlayerPed.Position;
                 var nearestPlayers = FindPlayersInRadius(localPlayerPosition, NearestPlayerScanRadius);
-                
+
                 Debug.WriteLine($"nearestPlayer: {nearestPlayers.Count}");
-                
+
                 if (nearestPlayers.Count > 0)
                 {
                     maxZombies = nearestPlayers.Count * MaxOwnZombies;
                 }
-                
+
                 bool needSpawn = ZombieInOwner() < MaxOwnZombies && ZombieCount() < maxZombies;
-        
+
                 if (needSpawn)
                 {
                     Vector3 spawnPos = FindSafeSpawnLocation(Game.PlayerPed.Position, SpawnMinRadius, SpawnMaxRadius);
                     bool success = await SpawnZombie(spawnPos);
                 }
             }
-        
+
             await Delay(SpawnDelay);
         }
 
@@ -603,14 +616,14 @@ namespace OutbreakZCore.Client.Core
             {
                 var ped = player.Character;
                 if (ped == null) continue;
-                
+
                 float distance = Vector3.Distance(root, ped.Position);
                 if (distance <= radius)
                 {
                     playersInRaduis.Add(player);
                 }
             }
-            
+
             return playersInRaduis;
         }
 
@@ -619,9 +632,9 @@ namespace OutbreakZCore.Client.Core
             Vector3 spawnPos = origin + GetRandomOffset(minRadius, maxRadius);
             spawnPos.Z = World.GetGroundHeight(spawnPos);
             spawnPos.Z -= 0.9f;
-            
+
             Vector3 savePos = spawnPos;
-            
+
             bool found = GetSafeCoordForPed(spawnPos.X, spawnPos.Y, spawnPos.Z, true, ref savePos, 1); //16
             var resultPos = found ? savePos : spawnPos;
 

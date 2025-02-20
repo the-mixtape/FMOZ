@@ -15,14 +15,13 @@ namespace OutbreakZCore.Client.Core.GameMode
         }
 
         private async Task BeginPlay()
-        {   // NetworkConcealPlayer(playerPedId, true,false);
-
+        {   
+            BucketsController.SetLocalPlayerRoutingBucket(RoutingBuckets.Uniq);
             Player.DeathEvent += OnPlayerDeath;
+            Player.RequestRespawnEvent += OnRequestRespawn;
             
             await Delay(FirstSpawnDelayMs);
             Exports["spawnmanager"].setAutoSpawn(false);
-            
-            // await Spawner.SpawnPlayer(_defaultModel, new Vector3(-3000.0f, -3000.0f, 0.0f), 0.0f);
 
             TriggerServerEvent("GameMode:InitPlayer");
         }
@@ -30,6 +29,12 @@ namespace OutbreakZCore.Client.Core.GameMode
         private void OnPlayerDeath()
         {
             ZombieSpawnManager.Disable();
+        }
+
+        private void OnRequestRespawn()
+        {
+            BucketsController.SetLocalPlayerRoutingBucket(RoutingBuckets.Uniq);
+            TriggerServerEvent("GameMode:RespawnPlayer");
         }
 
         // private async Task SetPlayerPosition(SpawnPosition position)
@@ -64,6 +69,7 @@ namespace OutbreakZCore.Client.Core.GameMode
             
             await Player.OnRespawnProcOut();
             
+            BucketsController.SetLocalPlayerRoutingBucket(RoutingBuckets.Default);
             ZombieSpawnManager.Enable();
         }
     }
