@@ -17,6 +17,7 @@ namespace OutbreakZCore.Client.Core.GameMode
 
         private async Task BeginPlay()
         {   
+            Weather.RequestSync();
             BucketsController.SetLocalPlayerRoutingBucket(RoutingBuckets.Uniq);
             
             Player.DeathEvent += OnPlayerDeath;
@@ -41,7 +42,6 @@ namespace OutbreakZCore.Client.Core.GameMode
         
         private async Task StartRespawn(SpawnPosition position)
         {
-            Debug.WriteLine($"StartRespawn called");
             _spawnPosition = position;
             await Player.OnRespawnProcIn();
             
@@ -51,7 +51,6 @@ namespace OutbreakZCore.Client.Core.GameMode
 
         private async Task FinishRespawn()
         {
-            Debug.WriteLine($"FinishRespawn called");
             await Player.OnRespawnProcOut();
             BucketsController.SetLocalPlayerRoutingBucket(RoutingBuckets.Default);
             ZombieSpawnManager.Enable();

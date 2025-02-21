@@ -19,10 +19,10 @@ namespace OutbreakZCore.Client.Core
         }
 
         [Tick]
-        private Task EnablePvp()
+        private async Task EnablePvp()
         {
             NetworkSetFriendlyFireOption(true);
-            return Task.FromResult(true);
+            await Task.FromResult(0);
         }
     }
 }
