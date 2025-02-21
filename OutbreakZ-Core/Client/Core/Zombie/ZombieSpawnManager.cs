@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
 using Mono.CSharp;
+using OutbreakZCore.Client.Config;
 using static CitizenFX.Core.Native.API;
 
 namespace OutbreakZCore.Client.Core
@@ -70,18 +71,13 @@ namespace OutbreakZCore.Client.Core
                 }
             }
 
-            private const int ContextTickDelay = 300;
-
-            private const float AttackAngleThreshold = 50.0f;
-            private const int ZombieDamage = 3;
-            private const float ZombieDistanceToRun = 30.0f;
-            private const float ZombieDistanceToMelee = 2.5f;
-            private const float ZombieDistanceToTakeDamage = 1.3f;
-            private const int DelayBetweenAttacks = 3000;
-
-            private const string ZombieMoveSet = "move_m@drunk@verydrunk";
-            private const string ZombieAttackDictionary = "melee@unarmed@streamed_core_fps";
-            private const string ZombieAttackAnim = "ground_attack_0_psycho";
+            // private const int ContextTickDelay = 300;
+            // private const float AttackAngleThreshold = 50.0f;
+            // private const int ZombieDamage = 3;
+            // private const float ZombieDistanceToRun = 30.0f;
+            // private const float ZombieDistanceToMelee = 2.5f;
+            // private const float ZombieDistanceToTakeDamage = 1.3f;
+            // private const int DelayBetweenAttacks = 3000;
 
             private bool _inRunState = false;
             private int _lastAttackTime = 0;
@@ -106,7 +102,7 @@ namespace OutbreakZCore.Client.Core
                 while (GetEnable())
                 {
                     await ZombieContextTick();
-                    await Delay(ContextTickDelay);
+                    await Delay(ClientConfig.ZombieContextTickDelay);
                 }
             }
 
@@ -201,7 +197,7 @@ namespace OutbreakZCore.Client.Core
                     }
                     else
                     {
-                        if (distanceToTarget < ZombieDistanceToRun &&
+                        if (distanceToTarget < ClientConfig.ZombieDistanceToRun &&
                             HasEntityClearLosToEntity(_zombie.Handle, nearestPlayer.Character.Handle, 17))
                         {
                             _inRunState = true;
@@ -217,12 +213,12 @@ namespace OutbreakZCore.Client.Core
 
                 if (nearestPlayer == null) return;
 
-                if (distanceToTarget < ZombieDistanceToMelee &&
+                if (distanceToTarget < ClientConfig.ZombieDistanceToMelee &&
                     !(nearestPlayer.Character.IsRagdoll || nearestPlayer.Character.IsGettingUp) &&
                     !(_zombie.IsRagdoll || _zombie.IsGettingUp))
                 {
                     int currentTime = GetGameTimer();
-                    if (currentTime - _lastAttackTime > DelayBetweenAttacks)
+                    if (currentTime - _lastAttackTime > ClientConfig.ZombieDelayBetweenAttacks)
                     {
                         await PlayAttackAnim(_zombie.Handle);
                         _lastAttackTime = currentTime;
@@ -242,13 +238,14 @@ namespace OutbreakZCore.Client.Core
 
                             distanceToTarget = Vector3.Distance(zombiePosition, targetPosition);
                             if (!CheckPedInCombat(nearestPlayer.Character.Handle) &&
-                                distanceToTarget < ZombieDistanceToTakeDamage && attackAngle < AttackAngleThreshold)
+                                distanceToTarget < ClientConfig.ZombieDistanceToTakeDamage && 
+                                attackAngle < ClientConfig.ZombieAttackAngleThreshold)
                             {
                                 Vector3 force = new Vector3(0.5f, 0.5f, 0.0f);
                                 KnockbackPed(nearestPlayer.Character.Handle, force);
 
                                 var targetServerId = GetPlayerServerId(nearestPlayer.Handle);
-                                TriggerServerEvent("ServerPlayer:DealDamageToPlayer", targetServerId, ZombieDamage);
+                                TriggerServerEvent("ServerPlayer:DealDamageToPlayer", targetServerId, ClientConfig.ZombieDamage);
                             }
                         }
                     }
@@ -269,10 +266,10 @@ namespace OutbreakZCore.Client.Core
 
             private async Task Zombify()
             {
-                if (!HasAnimSetLoaded(ZombieMoveSet))
+                if (!HasAnimSetLoaded(ClientConfig.ZombieMoveSet))
                 {
-                    RequestAnimSet(ZombieMoveSet);
-                    while (!HasAnimSetLoaded(ZombieMoveSet))
+                    RequestAnimSet(ClientConfig.ZombieMoveSet);
+                    while (!HasAnimSetLoaded(ClientConfig.ZombieMoveSet))
                     {
                         await Delay(10);
                     }
@@ -284,7 +281,7 @@ namespace OutbreakZCore.Client.Core
                 // int netId = NetworkGetNetworkIdFromEntity(_zombie.Handle);
                 // Debug.WriteLine($"netId: {netId}");
 
-                SetPedMovementClipset(_zombie.Handle, ZombieMoveSet, 1.0f);
+                SetPedMovementClipset(_zombie.Handle, ClientConfig.ZombieMoveSet, 1.0f);
 
                 StopPedSpeaking(_zombie.Handle, true);
                 SetPedConfigFlag(_zombie.Handle, 104, true);
@@ -332,16 +329,16 @@ namespace OutbreakZCore.Client.Core
 
             private async Task PlayAttackAnim(int entity)
             {
-                if (!HasAnimSetLoaded(ZombieAttackDictionary))
+                if (!HasAnimSetLoaded(ClientConfig.ZombieAttackDictionary))
                 {
-                    RequestAnimSet(ZombieAttackDictionary);
-                    while (!HasAnimSetLoaded(ZombieAttackDictionary))
+                    RequestAnimSet(ClientConfig.ZombieAttackDictionary);
+                    while (!HasAnimSetLoaded(ClientConfig.ZombieAttackDictionary))
                     {
                         await Delay(10);
                     }
                 }
 
-                TaskPlayAnim(entity, ZombieAttackDictionary, ZombieAttackAnim,
+                TaskPlayAnim(entity, ClientConfig.ZombieAttackDictionary, ClientConfig.ZombieAttackAnim,
                     8.0f, 1.0f, -1, 48, 0.001f,
                     false, false, false);
             }
@@ -353,49 +350,7 @@ namespace OutbreakZCore.Client.Core
         private static readonly Dictionary<int, ZombieContext> ZombieContexts = new Dictionary<int, ZombieContext>();
         private static readonly object ZombieContextsLock = new object();
 
-        private static readonly ZombieSettings[] ZombiePresets = new ZombieSettings[]
-        {
-            // male
-            new ZombieSettings("a_m_m_hillbilly_01", 500, 0.5f, 1.5f),
-            new ZombieSettings("a_m_m_hillbilly_02", 500, 0.5f, 1.5f),
-            new ZombieSettings("a_m_m_skidrow_01", 400, 0.4f, 1.4f),
-            new ZombieSettings("a_m_m_tramp_01", 450, 0.45f, 1.45f),
-            new ZombieSettings("a_m_m_trampbeac_01", 420, 0.42f, 1.42f),
-            new ZombieSettings("a_m_m_acult_01", 600, 0.6f, 1.6f),
-            new ZombieSettings("a_m_m_og_boss_01", 700, 0.65f, 1.7f),
-            new ZombieSettings("a_m_m_soucent_03", 480, 0.48f, 1.48f),
-            new ZombieSettings("a_m_m_hasjew_01", 460, 0.46f, 1.46f),
-            new ZombieSettings("a_m_m_tranvest_01", 500, 0.5f, 1.5f),
-            new ZombieSettings("a_m_y_methhead_01", 550, 0.55f, 1.55f),
-            new ZombieSettings("a_m_y_hippy_01", 520, 0.52f, 1.52f),
-            new ZombieSettings("a_m_y_skater_01", 530, 0.53f, 1.53f),
-            new ZombieSettings("a_m_y_juggalo_01", 580, 0.58f, 1.58f),
-            new ZombieSettings("a_m_y_soucent_04", 490, 0.49f, 1.49f),
-            new ZombieSettings("u_m_m_prolsec_01", 600, 0.6f, 1.6f),
-            new ZombieSettings("a_m_o_acult_01", 620, 0.62f, 1.62f),
-            new ZombieSettings("a_m_o_acult_02", 630, 0.63f, 1.63f),
-            new ZombieSettings("a_m_y_acult_01", 610, 0.61f, 1.61f),
-            new ZombieSettings("a_m_y_acult_02", 590, 0.59f, 1.59f),
-
-            // female
-            new ZombieSettings("a_f_m_trampbeac_01", 400, 0.4f, 1.4f),
-            new ZombieSettings("a_f_m_tramp_01", 420, 0.42f, 1.42f),
-            new ZombieSettings("a_f_m_skidrow_01", 430, 0.43f, 1.43f),
-            new ZombieSettings("a_f_y_hippie_01", 450, 0.45f, 1.45f),
-            new ZombieSettings("a_f_y_skater_01", 470, 0.47f, 1.47f)
-        };
-
         private static readonly Random Random = new Random();
-
-        private const int MaxOwnZombies = 5;
-
-        // private const int MaxZombies = 20;
-        private const int SpawnDelay = 1500;
-        private const float SpawnMinRadius = 30.0f;
-        private const float SpawnMaxRadius = 60.0f;
-
-        private const float NearestPlayerScanRadius = 200.0f;
-
         private static bool _spawnEnabled;
         private static readonly object EnabledLock = new object();
 
@@ -433,7 +388,7 @@ namespace OutbreakZCore.Client.Core
 
             bool debug = Variables.ZombieDebug;
             return
-                $"Spawner: {spawnerStatus} | Zombies: {zombieCount} | Owner: {owner}/{MaxOwnZombies} | Debug: {debug}";
+                $"Spawner: {spawnerStatus} | Zombies: {zombieCount} | Owner: {owner}/{ClientConfig.MaxOwnZombies} | Debug: {debug}";
         }
 
         private static int ZombieInOwner()
@@ -497,13 +452,13 @@ namespace OutbreakZCore.Client.Core
 
                 NetworkRegisterEntityAsNetworked(zombie.Handle);
                 int netId = PedToNet(zombie.Handle);
-                Debug.WriteLine($"ZombieNetId: {netId}");
+                // Debug.WriteLine($"ZombieNetId: {netId}");
 
-                while (!NetworkGetEntityIsNetworked(zombie.Handle))
-                {
-                    Debug.WriteLine("!NetworkGetEntityIsNetworked");
-                    await Delay(10);
-                }
+                // while (!NetworkGetEntityIsNetworked(zombie.Handle))
+                // {
+                //     Debug.WriteLine("!NetworkGetEntityIsNetworked");
+                //     await Delay(10);
+                // }
 
                 SetEntityMaxHealth(zombie.Handle, zombieSettings.MaxHealth);
                 SetEntityHealth(zombie.Handle, zombieSettings.MaxHealth);
@@ -518,8 +473,8 @@ namespace OutbreakZCore.Client.Core
                 zombie.State.Set("isZombie", "hux", true);
                 zombie.MarkAsNoLongerNeeded();
 
-                var zombieNetId = NetworkGetEntityNetScriptId(zombie.Handle);
-                Debug.WriteLine($"ZombieNetId: {zombieNetId}");
+                // var zombieNetId = NetworkGetEntityNetScriptId(zombie.Handle);
+                // Debug.WriteLine($"ZombieNetId: {zombieNetId}");
                 return true;
             }
 
@@ -528,8 +483,8 @@ namespace OutbreakZCore.Client.Core
 
         private static ZombieSettings GetZombieSettings()
         {
-            int index = Random.Next(ZombiePresets.Length);
-            return ZombiePresets[index];
+            int index = Random.Next(ClientConfig.ZombiePresets.Length);
+            return ClientConfig.ZombiePresets[index];
         }
 
 
@@ -585,27 +540,28 @@ namespace OutbreakZCore.Client.Core
         {
             if (_spawnEnabled)
             {
-                int maxZombies = MaxOwnZombies;
+                int maxZombies = ClientConfig.MaxOwnZombies;
                 var localPlayerPosition = Game.PlayerPed.Position;
-                var nearestPlayers = FindPlayersInRadius(localPlayerPosition, NearestPlayerScanRadius);
+                var nearestPlayers = FindPlayersInRadius(localPlayerPosition, ClientConfig.ZombieNearestPlayerScanRadius);
 
-                Debug.WriteLine($"nearestPlayer: {nearestPlayers.Count}");
+                // Debug.WriteLine($"nearestPlayer: {nearestPlayers.Count}");
 
                 if (nearestPlayers.Count > 0)
                 {
-                    maxZombies = nearestPlayers.Count * MaxOwnZombies;
+                    maxZombies = nearestPlayers.Count * ClientConfig.MaxOwnZombies;
                 }
 
-                bool needSpawn = ZombieInOwner() < MaxOwnZombies && ZombieCount() < maxZombies;
+                bool needSpawn = ZombieInOwner() < ClientConfig.MaxOwnZombies && ZombieCount() < maxZombies;
 
                 if (needSpawn)
                 {
-                    Vector3 spawnPos = FindSafeSpawnLocation(Game.PlayerPed.Position, SpawnMinRadius, SpawnMaxRadius);
+                    Vector3 spawnPos = FindSafeSpawnLocation(Game.PlayerPed.Position, 
+                        ClientConfig.SpawnZombieMinRadius, ClientConfig.SpawnZombieMaxRadius);
                     bool success = await SpawnZombie(spawnPos);
                 }
             }
 
-            await Delay(SpawnDelay);
+            await Delay(ClientConfig.ZombieSpawnDelay);
         }
 
         private List<CitizenFX.Core.Player> FindPlayersInRadius(Vector3 root, float radius)

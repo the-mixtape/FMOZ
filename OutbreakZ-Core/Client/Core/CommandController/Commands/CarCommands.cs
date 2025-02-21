@@ -34,6 +34,7 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
 
             var playerPed = GetPlayerPed(-1);
             Vector3 position = GetEntityCoords(playerPed, true);
+            
             int vehicle = CreateVehicle(vehicleHash, position.X, position.Y, position.Z, GetEntityHeading(playerPed), true, true);
 
             if (vehicle == 0)
@@ -45,7 +46,9 @@ namespace OutbreakZCore.Client.Core.Admin.Commands
             int netId = NetworkGetNetworkIdFromEntity(vehicle);
             SetNetworkIdCanMigrate(netId, true); // Позволяет передавать объект другим игрокам
             SetEntityAsMissionEntity(vehicle, true, true);
-            SetVehicleNumberPlateText(vehicle, "O1488Z");
+            var playerName = Game.Player.Name;
+            // SetVehicleNumberPlateText(vehicle, "O1488Z");
+            SetVehicleNumberPlateText(vehicle, playerName);
 
             SetPedIntoVehicle(playerPed, vehicle, -1);
             SetModelAsNoLongerNeeded(vehicleHash);

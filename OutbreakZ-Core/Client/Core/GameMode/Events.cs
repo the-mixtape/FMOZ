@@ -27,7 +27,7 @@ namespace OutbreakZCore.Client.Core.GameMode
         public void OnRespawnPlayer(string data)
         {
             var spawnPosition = Converter.FromJson<SpawnPosition>(data);
-            _ = RespawnPlayer(spawnPosition);
+            _ = StartRespawn(spawnPosition);
         }
     }
 }

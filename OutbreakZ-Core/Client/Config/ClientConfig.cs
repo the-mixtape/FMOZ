@@ -4,6 +4,7 @@ namespace OutbreakZCore.Client.Config
 {
     public static class ClientConfig
     {
+        #region Zombie
         public const int ZombieContextTickDelay = 500;
 
         public const int ZombieDamage = 10;
@@ -18,13 +19,13 @@ namespace OutbreakZCore.Client.Config
         public const string ZombieAttackAnim = "ground_attack_0_psycho";
 
         public const int MaxOwnZombies = 5;
-        private const int ZombieSpawnDelay = 1500;
-        private const float SpawnZombieMinRadius = 30.0f;
-        private const float SpawnZombieMaxRadius = 60.0f;
+        public const int ZombieSpawnDelay = 1500;
+        public const float SpawnZombieMinRadius = 30.0f;
+        public const float SpawnZombieMaxRadius = 60.0f;
 
-        private const float ZombieNearestPlayerScanRadius = 200.0f;
+        public const float ZombieNearestPlayerScanRadius = 200.0f;
 
-        public static readonly ZombieSpawnManager.ZombieSettings[] ZombieSettings = {
+        public static readonly ZombieSpawnManager.ZombieSettings[] ZombiePresets = {
             // male
             new ZombieSpawnManager.ZombieSettings("a_m_m_hillbilly_01", 500, 0.5f, 1.5f),
             new ZombieSpawnManager.ZombieSettings("a_m_m_hillbilly_02", 500, 0.5f, 1.5f),
@@ -54,5 +55,13 @@ namespace OutbreakZCore.Client.Config
             new ZombieSpawnManager.ZombieSettings("a_f_y_hippie_01", 450, 0.45f, 1.45f),
             new ZombieSpawnManager.ZombieSettings("a_f_y_skater_01", 470, 0.47f, 1.47f)
         };
+        #endregion
+        
+         
+        #region GameMode
+        public const int GameModeFirstSpawnDelayMs = 1000;
+        public const float GameModeSpawnThreshold = 20.0f;
+        public const int GameModeRespawnCheckerTickDelay = 1000;
+        #endregion
     }
 }

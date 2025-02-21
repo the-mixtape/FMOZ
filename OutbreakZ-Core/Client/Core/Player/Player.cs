@@ -39,16 +39,16 @@ namespace OutbreakZCore.Client.Core
                 {
                     Dead = true;
                     int killer = GetPedSourceOfDeath(PlayerPedId());
-                    int weapon = GetPedCauseOfDeath(PlayerPedId());
+                    int weaponHash = GetPedCauseOfDeath(PlayerPedId());
                     int killerId = NetworkGetPlayerIndexFromPed(killer);
-
+                    
                     if (killer != PlayerPedId() && NetworkIsPlayerActive(killerId))
                     {
-                        PlayerDeathByPlayer(killerId, weapon);
+                        PlayerDeathByPlayer(killerId, weaponHash);
                     }
                     else
                     {
-                        PlayerDeath(weapon);
+                        PlayerDeath(weaponHash);
                     }
                 }
                 else if(!IsPedFatallyInjured(PlayerPedId()))
@@ -92,13 +92,16 @@ namespace OutbreakZCore.Client.Core
                     await Delay(10);
                 }
 
+                int landId = GetCurrentLanguageId();
+                var lang = Localization.GtaLangToLanguages(landId);
+                
                 PushScaleformMovieFunction(scaleform, "CLEAR_ALL");
                 PopScaleformMovieFunctionVoid();
                 
                 PushScaleformMovieFunction(scaleform, "SET_DATA_SLOT");
                 PushScaleformMovieFunctionParameterInt(0);
                 PushScaleformMovieFunctionParameterString(GetControlInstructionalButton(0, (int)RespawnAction, 1));
-                PushScaleformMovieFunctionParameterString("Hold for Respawn");
+                PushScaleformMovieFunctionParameterString(Localization._(lang, Localization.Keys.RespawnButton));
                 PopScaleformMovieFunctionVoid();
 
                 PushScaleformMovieFunction(scaleform, "DRAW_INSTRUCTIONAL_BUTTONS");
@@ -106,7 +109,8 @@ namespace OutbreakZCore.Client.Core
                 
                 DrawScaleformMovieFullscreen(scaleform, 255, 255, 255, 255, 0);
 
-                Utils.Game.DrawText2D("You are dead", 0.5f, 0.5f, 1f, 2, 0, 255, 255, 255, 255);
+                var youAreDeadTitle = Localization._(lang, Localization.Keys.YouAreDead);
+                Utils.Game.DrawText2D(youAreDeadTitle, 0.5f, 0.5f, 1f, 4, 0, 255, 255, 255, 255);
             }
             
             await Task.FromResult(100);
@@ -114,12 +118,10 @@ namespace OutbreakZCore.Client.Core
 
         private void PlayerDeathByPlayer(int killer, int weapon)
         {
-            //Do
         }
 
         private void PlayerDeath(int weapon)
         {
-            
         }
 
         private static void OnDeath()
