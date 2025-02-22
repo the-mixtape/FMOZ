@@ -86,8 +86,14 @@ namespace OutbreakZCore.Client.Core.Zombie
 
         private void OnGameEventTriggered(string eventName, dynamic args)
         {
-            if (eventName != "CEventNetworkEntityDamage") return;
+            if (eventName == "CEventNetworkEntityDamage")
+            {
+                OnEventNetworkEntityDamage(args);
+            }
+        }
 
+        private void OnEventNetworkEntityDamage(dynamic args)
+        {
             int victimEntity = int.Parse(args[0].ToString());
             int attackerEntity = int.Parse(args[1].ToString());
 

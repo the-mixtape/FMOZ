@@ -10,6 +10,7 @@ namespace OutbreakZCore.Client.Core.Zombie
 {
     public class ZombieContext : BaseScript
     {
+        private int _lastAttackTime;
         private StateMachine StateMachine { get; set; }
         private WanderingState WanderingState { get; set; }
         private ChasingState ChasingState { get; set; }
@@ -41,22 +42,12 @@ namespace OutbreakZCore.Client.Core.Zombie
 
         public void OnPlayerAttack(CitizenFX.Core.Player player)
         {
+            if (!InOwnership()) return;
             if (_contextData.Target == player) return;
             StateMachine.SetState(null);
             _contextData.Target = player;
             StateMachine.SetState(ChasingState);
         }
-
-        // private const int ContextTickDelay = 300;
-        // private const float AttackAngleThreshold = 50.0f;
-        // private const int ZombieDamage = 3;
-        // private const float ZombieDistanceToRun = 30.0f;
-        // private const float ZombieDistanceToMelee = 2.5f;
-        // private const float ZombieDistanceToTakeDamage = 1.3f;
-        // private const int DelayBetweenAttacks = 3000;
-
-        private bool _inRunState;
-        private int _lastAttackTime;
 
         public ZombieContext(Ped zombie)
         {
@@ -87,7 +78,6 @@ namespace OutbreakZCore.Client.Core.Zombie
         public async Task Start()
         {
             _ = OnZombieDebug();
-            Zombie.Task.StandStill(-1);
 
             while (GetEnable())
             {
@@ -161,15 +151,14 @@ namespace OutbreakZCore.Client.Core.Zombie
             {
                 return;
             }
-
-            if (_contextData.Target == null)
+            
+            if (InOwnership())
             {
-                _contextData.Target = await FindTargetPlayer();
-            }
-
-            bool isOwned = InOwnership();
-            if (isOwned)
-            {
+                if (_contextData.Target == null)
+                {
+                    _contextData.Target = await FindTargetPlayer();
+                }
+                
                 if (_contextData.Target == null)
                 {
                     StateMachine.SetState(WanderingState);
@@ -198,7 +187,7 @@ namespace OutbreakZCore.Client.Core.Zombie
 
                     await Delay(500);
 
-                    if (isOwned)
+                    if (InOwnership())
                     {
                         var targetPosition = nearestPlayer.Character.Position;
                         var zombiePosition = Zombie.Position;
