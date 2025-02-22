@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Threading;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using CitizenFX.Core;
-using CitizenFX.Core.Native;
-using Mono.CSharp;
 using OutbreakZCore.Client.Config;
 using static CitizenFX.Core.Native.API;
 
-namespace OutbreakZCore.Client.Core
+namespace OutbreakZCore.Client.Core.Zombie
 {
     public class ZombieSpawnManager : BaseScript
     {
@@ -39,313 +34,6 @@ namespace OutbreakZCore.Client.Core
             }
         }
 
-        public class ZombieSettings
-        {
-            public string ZombieSkin { get; set; }
-            public float WalkSpeed { get; set; }
-            public float RunSpeed { get; set; }
-            public int MaxHealth { get; set; }
-
-            public ZombieSettings(string skin, int maxHealth, float walkSpeed, float runSpeed)
-            {
-                ZombieSkin = skin;
-                MaxHealth = maxHealth;
-                WalkSpeed = walkSpeed;
-                RunSpeed = runSpeed;
-            }
-        }
-
-        class ZombieContext : BaseScript
-        {
-            private readonly Ped _zombie;
-            private readonly ZombieSettings _settings;
-
-            private bool _enable = true;
-            private readonly object _enableLock = new object();
-
-            private bool GetEnable()
-            {
-                lock (_enableLock)
-                {
-                    return _enable;
-                }
-            }
-
-            // private const int ContextTickDelay = 300;
-            // private const float AttackAngleThreshold = 50.0f;
-            // private const int ZombieDamage = 3;
-            // private const float ZombieDistanceToRun = 30.0f;
-            // private const float ZombieDistanceToMelee = 2.5f;
-            // private const float ZombieDistanceToTakeDamage = 1.3f;
-            // private const int DelayBetweenAttacks = 3000;
-
-            private bool _inRunState = false;
-            private int _lastAttackTime = 0;
-
-            public ZombieContext(Ped zombie)
-            {
-                _zombie = zombie;
-                _settings = new ZombieSettings("", 400, 1.0f, 2.0f);
-            }
-
-            public ZombieContext(Ped zombie, ZombieSettings settings)
-            {
-                _zombie = zombie;
-                _settings = settings;
-            }
-
-            public async Task Start()
-            {
-                _ = OnZombieDebug();
-                _zombie.Task.StandStill(-1);
-
-                while (GetEnable())
-                {
-                    await ZombieContextTick();
-                    await Delay(ClientConfig.ZombieContextTickDelay);
-                }
-            }
-
-            public async Task Finish()
-            {
-                lock (_enableLock)
-                {
-                    _enable = false;
-                }
-
-                await Task.FromResult(0);
-            }
-
-            private async Task OnZombieDebug()
-            {
-                while (GetEnable())
-                {
-                    if (Variables.ZombieDebug)
-                    {
-                        var ownerColor = Color.FromArgb(255, 0, 255, 0);
-                        var notOwnerColor = Color.FromArgb(255, 255, 0, 0);
-                        var markerColor = InOwnership() ? ownerColor : notOwnerColor;
-
-                        var zombiePos = _zombie.Position;
-                        World.DrawMarker(
-                            MarkerType.VerticalCylinder,
-                            zombiePos + new Vector3(0, 0, -1),
-                            new Vector3(0, 0, 0), new Vector3(0, 0, 0), new Vector3(1f, 1f, 2f),
-                            markerColor);
-                        await Delay(0);
-                    }
-                    else
-                    {
-                        await Delay(1000);
-                    }
-                }
-            }
-
-
-            public bool Works()
-            {
-                bool enable;
-                lock (_enableLock)
-                {
-                    enable = _enable;
-                }
-
-                return enable;
-            }
-
-            public bool InOwnership()
-            {
-                return NetworkGetEntityOwner(_zombie.Handle) == PlayerId();
-            }
-
-            private async Task ZombieContextTick()
-            {
-                if (!_zombie.Exists() || _zombie.IsDead)
-                {
-                    await Finish();
-                    return;
-                }
-
-                await Zombify();
-
-                if (_zombie.IsRagdoll || _zombie.IsGettingUp)
-                {
-                    return;
-                }
-
-                var nearestPlayer = await FindNearestPlayer();
-                float distanceToTarget = 0;
-                if (nearestPlayer != null)
-                {
-                    distanceToTarget = Vector3.Distance(nearestPlayer.Character.Position, _zombie.Position);
-                }
-
-                bool isOwned = InOwnership();
-                if (isOwned)
-                {
-                    // idle
-                    if (nearestPlayer == null)
-                    {
-                        TaskStandStill(_zombie.Handle, -1);
-                        return;
-                    }
-
-                    float speed = _settings.WalkSpeed;
-                    if (_inRunState)
-                    {
-                        speed = _settings.RunSpeed;
-                    }
-                    else
-                    {
-                        if (distanceToTarget < ClientConfig.ZombieDistanceToRun &&
-                            HasEntityClearLosToEntity(_zombie.Handle, nearestPlayer.Character.Handle, 17))
-                        {
-                            _inRunState = true;
-                            speed = _settings.RunSpeed;
-                        }
-                    }
-
-                    TaskGoToEntity(
-                        _zombie.Handle, nearestPlayer.Character.Handle,
-                        -1, 0.0f, speed, 1073741824, 0
-                    );
-                }
-
-                if (nearestPlayer == null) return;
-
-                if (distanceToTarget < ClientConfig.ZombieDistanceToMelee &&
-                    !(nearestPlayer.Character.IsRagdoll || nearestPlayer.Character.IsGettingUp) &&
-                    !(_zombie.IsRagdoll || _zombie.IsGettingUp))
-                {
-                    int currentTime = GetGameTimer();
-                    if (currentTime - _lastAttackTime > ClientConfig.ZombieDelayBetweenAttacks)
-                    {
-                        await PlayAttackAnim(_zombie.Handle);
-                        _lastAttackTime = currentTime;
-
-                        await Delay(500);
-
-                        if (isOwned)
-                        {
-                            var targetPosition = nearestPlayer.Character.Position;
-                            var zombiePosition = _zombie.Position;
-
-                            var zombieForward = GetEntityForwardVector(_zombie.Handle);
-                            var delta = targetPosition - zombiePosition;
-                            delta.Normalize();
-                            float dot = zombieForward.X * delta.X + zombieForward.Y * delta.Y;
-                            var attackAngle = Math.Acos(dot) * (180.0f / Math.PI);
-
-                            distanceToTarget = Vector3.Distance(zombiePosition, targetPosition);
-                            if (!CheckPedInCombat(nearestPlayer.Character.Handle) &&
-                                distanceToTarget < ClientConfig.ZombieDistanceToTakeDamage && 
-                                attackAngle < ClientConfig.ZombieAttackAngleThreshold)
-                            {
-                                Vector3 force = new Vector3(0.5f, 0.5f, 0.0f);
-                                KnockbackPed(nearestPlayer.Character.Handle, force);
-
-                                var targetServerId = GetPlayerServerId(nearestPlayer.Handle);
-                                TriggerServerEvent("ServerPlayer:DealDamageToPlayer", targetServerId, ClientConfig.ZombieDamage);
-                            }
-                        }
-                    }
-                }
-            }
-
-            private bool CheckPedInCombat(int pedId)
-            {
-                return GetIsTaskActive(pedId, 130) || /* CTaskMeleeActionResult  */
-                       GetIsTaskActive(pedId, 3); /* CTaskCombatRoll */
-            }
-
-            void KnockbackPed(int targetPed, Vector3 force)
-            {
-                SetPedToRagdoll(targetPed, 350, 500, 0, false, false, false);
-                ApplyForceToEntity(targetPed, 1, force.X, force.Y, force.Z, 0, 0, 0, 0, false, true, true, false, true);
-            }
-
-            private async Task Zombify()
-            {
-                if (!HasAnimSetLoaded(ClientConfig.ZombieMoveSet))
-                {
-                    RequestAnimSet(ClientConfig.ZombieMoveSet);
-                    while (!HasAnimSetLoaded(ClientConfig.ZombieMoveSet))
-                    {
-                        await Delay(10);
-                    }
-                }
-
-                // var isZombie = _zombie.State.Get("isZombie");
-                // Debug.WriteLine($"isZombie: {isZombie}");
-
-                // int netId = NetworkGetNetworkIdFromEntity(_zombie.Handle);
-                // Debug.WriteLine($"netId: {netId}");
-
-                SetPedMovementClipset(_zombie.Handle, ClientConfig.ZombieMoveSet, 1.0f);
-
-                StopPedSpeaking(_zombie.Handle, true);
-                SetPedConfigFlag(_zombie.Handle, 104, true);
-                StopCurrentPlayingSpeech(_zombie.Handle);
-                StopCurrentPlayingAmbientSpeech(_zombie.Handle);
-                DisablePedPainAudio(_zombie.Handle, true);
-                SetBlockingOfNonTemporaryEvents(_zombie.Handle, true);
-                SetPedFleeAttributes(_zombie.Handle, 0, false);
-                SetPedCombatAttributes(_zombie.Handle, 46, true);
-                StopPedRingtone(_zombie.Handle);
-
-                Groups.AddPedInZombieGroup(_zombie.Handle);
-
-                ApplyPedDamagePack(_zombie.Handle, "BigHitByVehicle", 0, 9);
-                ApplyPedDamagePack(_zombie.Handle, "SCR_Dumpster", 0, 9);
-                ApplyPedDamagePack(_zombie.Handle, "SCR_Torture", 0, 9);
-            }
-
-            private Task<CitizenFX.Core.Player> FindNearestPlayer()
-            {
-                CitizenFX.Core.Player nearestPlayer = null;
-                float minDistance = float.MaxValue;
-
-                foreach (var player in Players)
-                {
-                    if (_zombie.Handle == player.Handle)
-                        continue;
-
-                    float distance = Vector3.Distance(player.Character.Position, _zombie.Position);
-
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        nearestPlayer = player;
-                    }
-                }
-
-                // if (nearestPlayer != null)
-                // {
-                // Debug.WriteLine($"Nearest Player: {nearestPlayer.Name}, distance ({minDistance})");
-                // }
-
-                return Task.FromResult(nearestPlayer);
-            }
-
-            private async Task PlayAttackAnim(int entity)
-            {
-                if (!HasAnimSetLoaded(ClientConfig.ZombieAttackDictionary))
-                {
-                    RequestAnimSet(ClientConfig.ZombieAttackDictionary);
-                    while (!HasAnimSetLoaded(ClientConfig.ZombieAttackDictionary))
-                    {
-                        await Delay(10);
-                    }
-                }
-
-                TaskPlayAnim(entity, ClientConfig.ZombieAttackDictionary, ClientConfig.ZombieAttackAnim,
-                    8.0f, 1.0f, -1, 48, 0.001f,
-                    false, false, false);
-            }
-        }
-
-        // private const string IsZombieStateName = "isZombie";
-
         // Dictionary<handle, context>
         private static readonly Dictionary<int, ZombieContext> ZombieContexts = new Dictionary<int, ZombieContext>();
         private static readonly object ZombieContextsLock = new object();
@@ -353,6 +41,11 @@ namespace OutbreakZCore.Client.Core
         private static readonly Random Random = new Random();
         private static bool _spawnEnabled;
         private static readonly object EnabledLock = new object();
+
+        public ZombieSpawnManager()
+        {
+            EventHandlers["gameEventTriggered"] += new Action<string, dynamic>(OnGameEventTriggered);
+        }
 
         public static bool Disable()
         {
@@ -389,6 +82,48 @@ namespace OutbreakZCore.Client.Core
             bool debug = Variables.ZombieDebug;
             return
                 $"Spawner: {spawnerStatus} | Zombies: {zombieCount} | Owner: {owner}/{ClientConfig.MaxOwnZombies} | Debug: {debug}";
+        }
+
+        private void OnGameEventTriggered(string eventName, dynamic args)
+        {
+            if (eventName != "CEventNetworkEntityDamage") return;
+
+            int victimEntity = int.Parse(args[0].ToString());
+            int attackerEntity = int.Parse(args[1].ToString());
+
+            if (IsEntityDead(victimEntity) || !DoesEntityExist(victimEntity) || !IsEntityAPed(victimEntity) ||
+                IsEntityDead(attackerEntity) || !DoesEntityExist(attackerEntity) ||
+                !IsEntityAPed(attackerEntity)) return;
+
+            ZombieContext zombieContext = null;
+            lock (ZombieContextsLock)
+            {
+                foreach (var pair in ZombieContexts)
+                {
+                    if (pair.Key == victimEntity)
+                    {
+                        zombieContext = pair.Value;
+                        break;
+                    }
+                }
+            }
+
+            if (zombieContext == null || !zombieContext.Works()) return;
+
+            CitizenFX.Core.Player attackerPlayer = null;
+            foreach (CitizenFX.Core.Player player in Players)
+            {
+                if (player.Character.Handle == attackerEntity)
+                {
+                    attackerPlayer = player;
+                    break;
+                }
+            }
+
+            if (attackerPlayer != null && attackerPlayer.IsAlive)
+            {
+                zombieContext.OnPlayerAttack(attackerPlayer);
+            }
         }
 
         private static int ZombieInOwner()
@@ -542,7 +277,8 @@ namespace OutbreakZCore.Client.Core
             {
                 int maxZombies = ClientConfig.MaxOwnZombies;
                 var localPlayerPosition = Game.PlayerPed.Position;
-                var nearestPlayers = FindPlayersInRadius(localPlayerPosition, ClientConfig.ZombieNearestPlayerScanRadius);
+                var nearestPlayers =
+                    FindPlayersInRadius(localPlayerPosition, ClientConfig.ZombieNearestPlayerScanRadius);
 
                 // Debug.WriteLine($"nearestPlayer: {nearestPlayers.Count}");
 
@@ -555,7 +291,7 @@ namespace OutbreakZCore.Client.Core
 
                 if (needSpawn)
                 {
-                    Vector3 spawnPos = FindSafeSpawnLocation(Game.PlayerPed.Position, 
+                    Vector3 spawnPos = FindSafeSpawnLocation(Game.PlayerPed.Position,
                         ClientConfig.SpawnZombieMinRadius, ClientConfig.SpawnZombieMaxRadius);
                     bool success = await SpawnZombie(spawnPos);
                 }

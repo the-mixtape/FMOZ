@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using CitizenFX.Core;
 using OutbreakZCore.Client.Config;
+using OutbreakZCore.Client.Core.Zombie;
 using OutbreakZCore.Shared;
 using static CitizenFX.Core.Native.API;
 
@@ -9,7 +10,7 @@ namespace OutbreakZCore.Client.Core.GameMode
     public partial class GameMode : BaseScript
     {
         private SpawnPosition _spawnPosition = new SpawnPosition();
-        private bool respawnCheckerFinished = false;
+        private bool _respawnCheckerFinished = false;
         
         public GameMode()
         {
@@ -45,7 +46,7 @@ namespace OutbreakZCore.Client.Core.GameMode
             _spawnPosition = position;
             await Player.OnRespawnProcIn();
             
-            respawnCheckerFinished = false;
+            _respawnCheckerFinished = false;
             Tick += RespawnChecker;
         }
 
@@ -58,7 +59,7 @@ namespace OutbreakZCore.Client.Core.GameMode
 
         private async Task RespawnChecker()
         {
-            if (respawnCheckerFinished) await Delay(0);
+            if (_respawnCheckerFinished) await Delay(0);
             
             Vector3 targetPosition = _spawnPosition.Location;
             Vector3 playerPosition = GetEntityCoords(Game.Player.Character.Handle, true);
@@ -66,7 +67,7 @@ namespace OutbreakZCore.Client.Core.GameMode
             Debug.WriteLine($"RespawnChecker - Target: {targetPosition} Current {playerPosition} Distance: {distance}");
             if (distance < ClientConfig.GameModeSpawnThreshold)
             {
-                respawnCheckerFinished = true;
+                _respawnCheckerFinished = true;
                 Tick -= RespawnChecker;
                 await FinishRespawn();
                 return;
