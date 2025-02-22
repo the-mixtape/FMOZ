@@ -12,13 +12,17 @@ namespace OutbreakZCore.Server.Core
         private static double _timeOffset = 0;
         private static bool _freezeTime = false;
         private static int _newWeatherTimer = 10;
+        private static bool _dynamicWeather = true;
 
-        private const bool DynamicWeather = true;
         private static readonly Random Rand = new Random();
 
 
         public Weather()
         {
+            Tick += UpdateTimeTick;
+            Tick += UpdateWeatherTick;
+            Tick += AutoUpdateTime;
+            Tick += AutoUpdateWeather;
         }
 
         [EventHandler("Weather:RequestSync")]
@@ -26,10 +30,51 @@ namespace OutbreakZCore.Server.Core
         {
             TriggerClientEvent(source, "Weather:UpdateWeather", _currentWeather);
             TriggerClientEvent(source, "Weather:UpdateTime", _baseTime, _timeOffset, _freezeTime);
-            Tick += UpdateTimeTick;
-            Tick += UpdateWeatherTick;
-            Tick += AutoUpdateTime;
-            Tick += AutoUpdateWeather;
+        }
+        
+        private void SyncForAll()
+        {
+            TriggerClientEvent("Weather:UpdateWeather", _currentWeather);
+            TriggerClientEvent("Weather:UpdateTime", _baseTime, _timeOffset, _freezeTime);
+        }
+
+        [EventHandler("Weather:SetTime")]
+        private void OnSetTime([FromSource] CitizenFX.Core.Player source, int hour, int minute)
+        {
+            // check is admin
+            SetTime(hour, minute);;
+            TriggerClientEvent(source, "Weather:Notify", $"Time has changed to {hour:00}:{minute:00}.");
+        }
+
+
+        [EventHandler("Weather:FreezeTime")]
+        private void OnFreezeTime([FromSource] CitizenFX.Core.Player source, int hour, int minute)
+        {
+            // check is admin
+            _freezeTime = !_freezeTime;
+            string message = _freezeTime ? "Time is now frozen." : "Time is no longer frozen.";
+            TriggerClientEvent(source, "Weather:Notify", message);
+        }
+
+        [EventHandler("Weather:SetWeather")]
+        private void OnSetWeather([FromSource] CitizenFX.Core.Player source, string weather)
+        {
+            if (WeatherTypes.IsValidWeather(weather))
+            {
+                _currentWeather = weather;
+                _newWeatherTimer = 10;
+                SyncForAll();
+                TriggerClientEvent(source, "Weather:Notify", $"Weather has been changed to {_currentWeather}.");
+            }
+        }
+
+
+        [EventHandler("Weather:FreezeWeather")]
+        private void OnFreezeWeather([FromSource] CitizenFX.Core.Player source, int hour, int minute)
+        {
+            _dynamicWeather = !_dynamicWeather;
+            string status = _dynamicWeather ? "enabled" : "disabled";
+            TriggerClientEvent(source, "Weather:Notify", $"Dynamic weather changes are now ~r~{status}~s~.");
         }
 
         private static async Task UpdateWeatherTick()
@@ -38,7 +83,7 @@ namespace OutbreakZCore.Server.Core
             await Delay(60000);
             if (_newWeatherTimer == 0)
             {
-                if (DynamicWeather)
+                if (_dynamicWeather)
                 {
                     NextWeatherStage();
                 }

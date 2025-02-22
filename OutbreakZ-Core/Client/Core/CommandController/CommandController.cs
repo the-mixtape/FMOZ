@@ -15,6 +15,7 @@ namespace OutbreakZCore.Client.Core.CommandController
         private readonly SkinCommands _skinCommands = new SkinCommands();
         private readonly PositionCommands _tpCommands = new PositionCommands();
         private readonly ZombieCommands _zombieCommands = new ZombieCommands();
+        private readonly WeatherCommands _weatherCommands = new WeatherCommands();
         
 
         private void BeginPlay()
@@ -45,6 +46,12 @@ namespace OutbreakZCore.Client.Core.CommandController
             
             RegisterBaseCommand("tp", _tpCommands.OnBlipTeleport);
             RegisterBaseCommand("pos", _tpCommands.OnShowPosition);
+            
+            RegisterBaseCommand("time", _weatherCommands.OnShowTime);
+            RegisterBaseCommand("settime", _weatherCommands.OnSetTime);
+            RegisterBaseCommand("setweather", _weatherCommands.OnSetWeather);
+            RegisterBaseCommand("freezetime", _weatherCommands.OnFreezeTime);
+            RegisterBaseCommand("freezeweather", _weatherCommands.OnFreezeWeather);
         }
 
         private void RegisterBaseCommand(string commandName, Func<int, List<object>, string, Task> command)

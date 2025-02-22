@@ -49,6 +49,17 @@ namespace OutbreakZCore.Shared
             return Types.None;
         }
 
+        public static bool IsValidWeather(string weather)
+        {
+            var type = GetWeatherType(weather);
+            return type != Types.None;
+        }
+
+        public static string GetAvailableWeatherTypes()
+        {
+            return String.Join(", ", WeatherTypesDict.Values.ToArray());
+        }
+
         private static readonly Dictionary<Types, string> WeatherTypesDict = new Dictionary<Types, string>
         {
             { Types.None, "" },
