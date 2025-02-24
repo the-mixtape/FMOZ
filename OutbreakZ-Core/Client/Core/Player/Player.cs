@@ -18,13 +18,14 @@ namespace OutbreakZCore.Client.Core
         
         private void BeginPlay()
         {
-            InitializePlayerGround();
+            InitializePlayerGroup();
+            InitializeCrouchCrawl();
 
             Tick += DeathDetection;
             Tick += DeathMessage;
         }
 
-        private void InitializePlayerGround()
+        private void InitializePlayerGroup()
         {
             var playerPedId = PlayerPedId();
             Groups.AddPedInHumanGroup(playerPedId);   
