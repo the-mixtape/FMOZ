@@ -24,5 +24,12 @@ namespace OutbreakZCore.Shared.Utils
             
             return value;
         }
+
+        public static float MapRange(float value, float inRangeMin, float inRangeMax, float outRangeMin, float outRangeMax)
+        {
+            if (value < inRangeMin) value = inRangeMin;
+            if (value > inRangeMax) value = inRangeMax;
+            return (value - inRangeMin) / (inRangeMax - inRangeMin) * (outRangeMax - outRangeMin) + outRangeMin; 
+        } 
     }    
 }

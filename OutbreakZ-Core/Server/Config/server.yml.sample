@@ -5,3 +5,5 @@ SpawnPositions:
     Heading: 328.0
   - Location: { X: -1530.0, Y: -1280.0, Z: 2.0 }
     Heading: 269.0
+DatabaseConnectionString: "Host=;Database=;Username=;Password="
+DatabaseMigrationsPath: "/Migrations"

@@ -39,15 +39,15 @@ namespace OutbreakZCore.Client.Core.Zombie
         {
             return Zombie.Handle;
         }
-
-        public void OnPlayerAttack(CitizenFX.Core.Player player)
-        {
-            if (!InOwnership()) return;
-            if (_contextData.Target == player) return;
-            StateMachine.SetState(null);
-            _contextData.Target = player;
-            StateMachine.SetState(ChasingState);
-        }
+        
+        // public void OnPlayerAttack(CitizenFX.Core.Player player)
+        // {
+        //     if (!InOwnership()) return;
+        //     if (_contextData.Target == player) return;
+        //     StateMachine.SetState(null);
+        //     _contextData.Target = player;
+        //     StateMachine.SetState(ChasingState);
+        // }
 
         public ZombieContext(Ped zombie)
         {
@@ -207,7 +207,7 @@ namespace OutbreakZCore.Client.Core.Zombie
                             KnockbackPed(nearestPlayer.Character.Handle, force);
 
                             var targetServerId = GetPlayerServerId(nearestPlayer.Handle);
-                            TriggerServerEvent("ServerPlayer:DealDamageToPlayer", targetServerId,
+                            TriggerServerEvent("Player.DealDamageToPlayer", targetServerId,
                                 ClientConfig.ZombieDamage);
                         }
                     }

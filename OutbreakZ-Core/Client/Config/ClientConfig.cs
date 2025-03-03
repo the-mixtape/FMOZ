@@ -1,4 +1,6 @@
-﻿using OutbreakZCore.Client.Core.Zombie;
+﻿using CitizenFX.Core;
+using OutbreakZCore.Client.Core.Zombie;
+using OutbreakZCore.Shared;
 
 namespace OutbreakZCore.Client.Config
 {
@@ -59,11 +61,16 @@ namespace OutbreakZCore.Client.Config
         };
         #endregion
         
-         
         #region GameMode
         public const int GameModeFirstSpawnDelayMs = 5000;
         public const float GameModeSpawnThreshold = 20.0f;
         public const int GameModeRespawnCheckerTickDelay = 1000;
+        #endregion
+        
+        #region Player
+
+        public static readonly SpawnPosition PlayerSpawn = new SpawnPosition(456.9026f, -991.0045f, 29.6895f, 90.0f);
+
         #endregion
     }
 }

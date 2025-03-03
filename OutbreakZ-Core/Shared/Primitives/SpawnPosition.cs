@@ -17,6 +17,18 @@ namespace OutbreakZCore.Shared
         /// </summary>
         public float Heading { get; set; }
 
+        public SpawnPosition()
+        {
+            this.Location = Vector3.Zero;
+            this.Heading = 0f;
+        }
+
+        public SpawnPosition(float x, float y, float z, float heading)
+        {
+            this.Location = new Vector3(x, y, z);
+            this.Heading = heading;
+        }
+        
         public override string ToString()
         {
             return $"({this.Location.X}, {this.Location.Y}, {this.Location.Z})";

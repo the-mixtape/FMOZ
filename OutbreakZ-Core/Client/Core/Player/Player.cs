@@ -1,5 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Dynamic;
+using System.Threading.Tasks;
 using CitizenFX.Core;
+using OutbreakZCore.Client.Config;
 using static CitizenFX.Core.Native.API;
 
 namespace OutbreakZCore.Client.Core
@@ -15,6 +18,12 @@ namespace OutbreakZCore.Client.Core
         private static bool InRespawnProcess { get; set; } = false;
         
         private const Control RespawnAction = Control.Pickup;
+
+        public Player()
+        {
+            Events();
+
+        }
         
         private void BeginPlay()
         {
@@ -136,7 +145,6 @@ namespace OutbreakZCore.Client.Core
             await Delay(2000);
         }
 
-
         public static async Task OnRespawnProcOut()
         {
             InRespawnProcess = false;
@@ -145,6 +153,17 @@ namespace OutbreakZCore.Client.Core
             DoScreenFadeIn(1000);
             PlaySoundFrontend(-1, "Hit", "RESPAWN_ONLINE_SOUNDSET", true);
             await Task.FromResult(0);
+        }
+        
+        private dynamic SpawnPosition()
+        {
+            dynamic obj = new ExpandoObject();
+            obj.x = ClientConfig.PlayerSpawn.Location.X;
+            obj.y = ClientConfig.PlayerSpawn.Location.Y;
+            obj.z = ClientConfig.PlayerSpawn.Location.Z;
+            obj.heading = ClientConfig.PlayerSpawn.Heading;
+            obj.model = "mp_m_freemode_01";
+            return obj;
         }
     }
 }

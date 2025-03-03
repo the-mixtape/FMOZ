@@ -23,7 +23,7 @@ namespace OutbreakZCore.Client.Core.GameMode
         //     _ = SetPlayerPosition(spawnPosition);
         // }
 
-        [EventHandler("GameMode:RespawnPlayer")]
+        [EventHandler("GameMode.RespawnPlayer")]
         public void OnRespawnPlayer(string data)
         {
             var spawnPosition = Converter.FromJson<SpawnPosition>(data);

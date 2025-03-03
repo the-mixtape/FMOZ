@@ -42,11 +42,6 @@ namespace OutbreakZCore.Client.Core.Zombie
         private static bool _spawnEnabled;
         private static readonly object EnabledLock = new object();
 
-        public ZombieSpawnManager()
-        {
-            EventHandlers["gameEventTriggered"] += new Action<string, dynamic>(OnGameEventTriggered);
-        }
-
         public static bool Disable()
         {
             return SetSpawnEnabled(false);
@@ -84,53 +79,45 @@ namespace OutbreakZCore.Client.Core.Zombie
                 $"Spawner: {spawnerStatus} | Zombies: {zombieCount} | Owner: {owner}/{ClientConfig.MaxOwnZombies} | Debug: {debug}";
         }
 
-        private void OnGameEventTriggered(string eventName, dynamic args)
-        {
-            if (eventName == "CEventNetworkEntityDamage")
-            {
-                OnEventNetworkEntityDamage(args);
-            }
-        }
-
-        private void OnEventNetworkEntityDamage(dynamic args)
-        {
-            int victimEntity = int.Parse(args[0].ToString());
-            int attackerEntity = int.Parse(args[1].ToString());
-
-            if (IsEntityDead(victimEntity) || !DoesEntityExist(victimEntity) || !IsEntityAPed(victimEntity) ||
-                IsEntityDead(attackerEntity) || !DoesEntityExist(attackerEntity) ||
-                !IsEntityAPed(attackerEntity)) return;
-
-            ZombieContext zombieContext = null;
-            lock (ZombieContextsLock)
-            {
-                foreach (var pair in ZombieContexts)
-                {
-                    if (pair.Key == victimEntity)
-                    {
-                        zombieContext = pair.Value;
-                        break;
-                    }
-                }
-            }
-
-            if (zombieContext == null || !zombieContext.Works()) return;
-
-            CitizenFX.Core.Player attackerPlayer = null;
-            foreach (CitizenFX.Core.Player player in Players)
-            {
-                if (player.Character.Handle == attackerEntity)
-                {
-                    attackerPlayer = player;
-                    break;
-                }
-            }
-
-            if (attackerPlayer != null && attackerPlayer.IsAlive)
-            {
-                zombieContext.OnPlayerAttack(attackerPlayer);
-            }
-        }
+        // private void OnEventNetworkEntityDamage(dynamic args)
+        // {
+        //     int victimEntity = int.Parse(args[0].ToString());
+        //     int attackerEntity = int.Parse(args[1].ToString());
+        //
+        //     if (IsEntityDead(victimEntity) || !DoesEntityExist(victimEntity) || !IsEntityAPed(victimEntity) ||
+        //         IsEntityDead(attackerEntity) || !DoesEntityExist(attackerEntity) ||
+        //         !IsEntityAPed(attackerEntity)) return;
+        //
+        //     ZombieContext zombieContext = null;
+        //     lock (ZombieContextsLock)
+        //     {
+        //         foreach (var pair in ZombieContexts)
+        //         {
+        //             if (pair.Key == victimEntity)
+        //             {
+        //                 zombieContext = pair.Value;
+        //                 break;
+        //             }
+        //         }
+        //     }
+        //
+        //     if (zombieContext == null || !zombieContext.Works()) return;
+        //
+        //     CitizenFX.Core.Player attackerPlayer = null;
+        //     foreach (CitizenFX.Core.Player player in Players)
+        //     {
+        //         if (player.Character.Handle == attackerEntity)
+        //         {
+        //             attackerPlayer = player;
+        //             break;
+        //         }
+        //     }
+        //
+        //     if (attackerPlayer != null && attackerPlayer.IsAlive)
+        //     {
+        //         zombieContext.OnPlayerAttack(attackerPlayer);
+        //     }
+        // }
 
         private static int ZombieInOwner()
         {

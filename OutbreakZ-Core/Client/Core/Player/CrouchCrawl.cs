@@ -197,7 +197,7 @@ namespace OutbreakZCore.Client.Core
         private async Task StartCrouch()
         {
             _isCrouched = true;
-            await LoadClipSet(PedCrouchedMoveClipSet);
+            await Utils.Game.LoadClipSet(PedCrouchedMoveClipSet);
             var playerPed = API.PlayerPedId();
 
             if (API.GetPedStealthMovement(playerPed))
@@ -501,7 +501,6 @@ namespace OutbreakZCore.Client.Core
                     var headingDiff = forward ? 1 : -1;
                     var heading = API.GetEntityHeading(playerPed);
                     API.SetEntityHeading(playerPed, heading + headingDiff);
-                    Debug.WriteLine($"{heading} + {headingDiff} | forward: {forward}");
                 }
                 else
                 {
@@ -621,8 +620,8 @@ namespace OutbreakZCore.Client.Core
                 await Delay(100);
             }
 
-            await LoadAnimDict(MoveCrawlAnimDict);
-            await LoadAnimDict(MoveCrawlProneAnimDict);
+            await Utils.Game.LoadAnimDict(MoveCrawlAnimDict);
+            await Utils.Game.LoadAnimDict(MoveCrawlProneAnimDict);
 
             if (ShouldPlayerDiveToCrawl(playerPed))
             {
@@ -718,27 +717,10 @@ namespace OutbreakZCore.Client.Core
                    !API.IsPedInjured(playerPed) && !API.IsPedInMeleeCombat(playerPed) && !API.IsPedRagdoll(playerPed);
         }
 
-        private static async Task LoadAnimDict(string dict)
-        {
-            API.RequestAnimDict(dict);
-            while (!API.HasAnimDictLoaded(dict))
-            {
-                await Delay(0);
-            }
-        }
-
-        private static async Task LoadClipSet(string clipset)
-        {
-            API.RequestClipSet(clipset);
-            while (!API.HasClipSetLoaded(clipset))
-            {
-                await Delay(0);
-            }
-        }
 
         private static async Task SetPlayerClipSet(string clipset)
         {
-            await LoadClipSet(clipset);
+            await Utils.Game.LoadClipSet(clipset);
             API.SetPedMovementClipset(API.PlayerPedId(), clipset, 0.5f);
             API.RemoveClipSet(clipset);
         }
@@ -752,7 +734,7 @@ namespace OutbreakZCore.Client.Core
             float blendOut = 2,
             int duration = -1, float startTime = 0)
         {
-            await LoadAnimDict(animDict);
+            await Utils.Game.LoadAnimDict(animDict);
             API.TaskPlayAnim(ped, animDict, animName, blendIn, blendOut, duration, 0, startTime, false, false, false);
             API.RemoveAnimDict(animDict);
         }

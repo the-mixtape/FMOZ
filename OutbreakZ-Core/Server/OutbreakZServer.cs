@@ -13,8 +13,11 @@ namespace OutbreakZCore.Server
         
         public OutbreakZServer()
         {
-            Debug.WriteLine("OutbreakZServer initialized");
             ReadConfig();
+            
+            Database.Database.Initialize(ServerConfig.DatabaseConnectionString, ServerConfig.DatabaseMigrationsPath);
+            
+            Debug.WriteLine("OutbreakZServer initialized");
         }
 
         private void ReadConfig()
